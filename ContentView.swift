@@ -16,10 +16,10 @@ import CoreMotion
 import CoreML
 import Foundation
 
+// set up user’s defaults database
 struct UserDefaultsKeys {
     static let appInstalledKey = "AppInstalledKey"
 }
-
 extension UserDefaults {
     var isAppInstalledBefore: Bool {
         get {
@@ -30,6 +30,7 @@ extension UserDefaults {
         }
     }
 }
+/*
 class AppViewModel: ObservableObject {
     @Published var customValue: Int = 0
 
@@ -39,7 +40,7 @@ class AppViewModel: ObservableObject {
             UserDefaults.standard.isAppInstalledBefore = false
         }
     }
-}
+}*/
 
 /* The entry of the app
    Has two buttons in it, setting view and statistics view
@@ -76,9 +77,7 @@ struct ContentView: View {
     @State private var motionManager = CMMotionManager()
     @State private var recordingCount = 0
     @State private var sensorData: [[Double]] = []
-    
     @AppStorage("localDateString") var storedDate: String = "2023-09-24"
-
     @State private var showPrivacyAlert = false
 
     var body: some View {
@@ -108,7 +107,6 @@ struct ContentView: View {
                     Alert(title: Text("Privacy limitations"),
                           message: Text("Do you agree to allow this app to access your private data (hand movement data)?"),
                           primaryButton: .default(Text("Agree")) {
-                           // print("viewModel.customValue: \(viewModel.customValue)")
                             self.generalTimer()
                             print ("first start timer")
                           },
@@ -125,7 +123,6 @@ struct ContentView: View {
                     StatisticsView(SundayData: $SundayData, MondayData: $MondayData, TuesdayData: $TuesdayData, WednesdayData: $WednesdayData, ThursdayData: $ThursdayData, FridayData: $FridayData, SaturdayData: $SaturdayData)
                         
                 }
-               // .zIndex(showSettingView ? 1 : 0)
                 .sheet(isPresented: $isShowingAlarmView) {
                     AlarmView()
                 }
@@ -158,8 +155,8 @@ struct ContentView: View {
                     count += 1
                     print("count:\(count)")
                     makePrediction()
-                  //  predictionResult = 1
-                    if predictionResult == 1 { // indicate that the user is washing hands
+                     // indicate that the user is washing hands
+                    if predictionResult == 1 {
                         timer2?.invalidate()
                         isWashStart = true
                 
@@ -220,8 +217,7 @@ struct ContentView: View {
         }
     }
     
-    /* Return which day of the week it is today.
-     */
+    // Return which day of the week it is today
     func currentDayOfWeek() -> String {
         let calendar = Calendar.current
         let today = Date()
@@ -232,7 +228,7 @@ struct ContentView: View {
     }
     
     /* Check whether the current day is Sunday and if it's a new Sunday
-       compared to a previously stored date. If both conditions are met, the function resets handwashing
+       compared with the previous stored date. If both conditions are met, the function resets handwashing
        data counters to zero
      */
     func setZeros() {
@@ -252,8 +248,9 @@ struct ContentView: View {
 
     }
 
-    /*  Reset the data variables corresponding to each day of the week to zero. Additionally, it updates the UserDefaults with the newly reset values to persist this information. UserDefaults is a simple key-value storage where you can save small pieces of data, in this case, the data for each day of the week.
-     */
+    /* Reset the data variables corresponding to each day of the week to zero. 
+       Additionally, it updates the UserDefaults with the newly reset values to persist this information.
+    */
     func resetData() {
         SundayData = 0
         UserDefaults.standard.set(SundayData, forKey: "Sunday")
@@ -277,7 +274,10 @@ struct ContentView: View {
         UserDefaults.standard.set(SaturdayData, forKey: "Saturday")
     }
     
-    /* This function is responsible for initializing and collecting device motion data. It captures data such as user acceleration and rotation rates from the device's sensors. Once a predetermined amount of records (200 records in this instance) is gathered, it ceases capturing and prepares the data for model prediction.
+    /* Initializing and collecting device motion data. 
+       It captures user acceleration and rotation rates from the device's sensors.
+       Once a predetermined amount of records (200 records in this instance) is gathered,
+       it ceases capturing and prepares the data for model prediction.
      */
     func makePrediction() {
         self.sensorData.removeAll()
@@ -299,7 +299,8 @@ struct ContentView: View {
         }
     }
 
-    /* This function processes the captured motion data to be fit for model prediction. It reshapes the raw motion data into the format that the pre-trained CoreML model expects. Once the data is processed, it's fed into the model to generate a prediction. The function then deciphers the model's output to produce a meaningful result that's stored in the `predictionResult` variable.
+    /* Processing the captured motion data to be fit for model prediction.
+       Once the data is processed, it's fed into the model to generate a prediction.
      */
     func dataToModel() {
         // Load the model
@@ -316,12 +317,9 @@ struct ContentView: View {
         for (position, value) in reshape_input.enumerated() {
             input[position] = NSNumber(value: value)
         }
-        
-        // Create an input dictionary
        let mapped_input: [String: Any] = ["input_18": input]
         // Convert the input dictionary to MLFeatureProvider
         let featureProvider = try! MLDictionaryFeatureProvider(dictionary: mapped_input)
-     //   let elementCount = reshape_input.count
         // Make predictions using the model
         let prediction = try! compiled_Model.prediction(from: featureProvider)
         if let output = prediction.featureValue(for: "Identity")?.multiArrayValue {
@@ -334,34 +332,13 @@ struct ContentView: View {
                 }
             }
         }
-        
-        //let numRows = input.shape[0].intValue
-       // let numColumns = input.shape[1].intValue
-        
-        //print(input)
-        /*
-        for row in 0..<numRows {
-            for column in 0..<numColumns {
-                let value = input[[NSNumber(value: row), NSNumber(value: column)]].doubleValue
-                print("\(row), \(column)): \(value)")
-                
-            }
-        }
-        print("]")
-         */
         print("predictionResult:\(predictionResult)")
     }
 }
-/* DataItem` represents a data model with a unique identifier (`id`), a name, and a value.
-   Features:
-   - Every `DataItem` instance has a unique `id` using the `UUID`.
-   - The `name` property represents the name of the data item.
-   - The `value` property fetches and stores its value using `AppStorage` and `UserDefaults`.
- */
+// Preparing a data model for the bar chart
 struct DataItem: Identifiable {
     var id = UUID()
     var name: String
-    //var value: Int
     @AppStorage("value") var value: Int = UserDefaults.standard.integer(forKey: "value")
 }
 
@@ -374,8 +351,6 @@ struct StatisticsView: View {
     @Binding var ThursdayData: Int
     @Binding var FridayData: Int
     @Binding var SaturdayData: Int
-    
-    // An array of DataItem objects that contains data for the histogram.
     var chartData: [DataItem]
         
     // Initializing the view with data for each day.
@@ -513,7 +488,7 @@ struct ColumnView: View {
 }
 
 /*
- view for allowing users to customize the handwashing reminder interval
+ View for allowing users to customize the handwashing reminder interval
  Features:
  - Users can adjust the hours and minutes for the alarm using `+` and `-` buttons.
  - The user's chosen hour and minute values are stored in `savedHour` and `savedMinute` respectively.
@@ -537,7 +512,6 @@ struct SettingView: View {
     @AppStorage("savedHour") private var savedHour: Int = 0
     @AppStorage("savedMinute") private var savedMinute: Int = 0
     
-    
     @Binding var isShowingAlarmView : Bool// show alert
     @State private var timerCounter : Int = 0
     @Binding var checkCounter : Int
@@ -550,8 +524,7 @@ struct SettingView: View {
                         Text("Edit Alarm")
                             .font(.system(size: 23))
                             .foregroundColor(.blue)
-                            .padding(.top, -15)
-                        
+                            .padding(.top, -15) 
                     }
                 Spacer()
                     VStack(alignment: .center, spacing: geometry.size.width * 0.08) {
@@ -585,7 +558,6 @@ struct SettingView: View {
                             }
                             .font(.title2)
                             .frame(width: geometry.size.width * 0.25, height: geometry.size.width * 0.05)
-                           // selectedHour = hours
                         }
                         
                         HStack(spacing: geometry.size.width * 0.13)
@@ -625,8 +597,7 @@ struct SettingView: View {
                     Spacer().frame(height: 1)
                 
                     HStack(alignment: .center, spacing: geometry.size.width * 0.44) {
-                            
-                            // -----cancel button----------
+                            // set the cancel button
                             Button(action: {
                                 withAnimation {
                                     
@@ -644,13 +615,12 @@ struct SettingView: View {
                                 -5
                             }
                         
-                            //-------confirm button-----------
+                            // set confirm button
                             Button(action: {
                                 withAnimation {
-                                    //isCheckButtonTapped.toggle()
                                     checkCounter += 1
                                     isCheckButtonTapped.toggle()
-                                    isTimerRunning.toggle() // true->false
+                                    isTimerRunning.toggle()
                                 }
                                 savedMinute = self.minutes
                                 savedHour = self.hours
@@ -709,8 +679,7 @@ struct SettingView: View {
                     }
                 }
             }
-        }
-        
+        } 
     }
     func justTimerCorrupt() { //corrupt the timer abnormally
         previousStateCheck = isCheckButtonTapped
@@ -731,15 +700,9 @@ struct SettingView: View {
         timer?.invalidate() // stop the timer
         timer = nil // release the timer
         isShowingAlarmView = true
-        // audio reminder
-      //  WKInterfaceDevice.current().play(.notification)
-        // vibration reminder
-        
-      //  WKInterfaceDevice.current().play(.click)
         Timer.scheduledTimer(withTimeInterval: 0.7, repeats: true) { timer in
             if vibrationCounter2 < 2 {
                 WKInterfaceDevice.current().play(.notification)
-                //WKInterfaceDevice.current().play(.click)
                 vibrationCounter2 += 1
             }
         }
@@ -770,28 +733,20 @@ struct SettingView: View {
             }
         }
     }
-    func currentDayOfWeek() -> String {
-        let calendar = Calendar.current
-        let today = Date()
-        let weekdays = calendar.weekdaySymbols
-        let weekday = calendar.component(.weekday, from: today)
-        
-        return weekdays[weekday - 1]
-    }
 }
 
-/* Displays an animated image sequence that simulates an alarm.
+/* Displays an animated image sequence that works as an alarm.
    The animation runs from frame 31 to frame 50 and loops back to the beginning upon completion.
  */
 struct AlarmView: View {
     @Environment(\.dismiss) var dismiss
-    @State private var currentFrame2 = 31
+    @State private var currentFrame = 31
     let totalFrames2 = 50
     let frameDuration2 = 0.1
     @State var showRedImage = true
     var body: some View {
         VStack {
-            Image("red-\(currentFrame2)")
+            Image("red-\(currentFrame)")
                 .resizable()
                 .scaledToFit()
                 .frame(width: 187, height: 187)
@@ -799,10 +754,10 @@ struct AlarmView: View {
         }
         .onAppear {
             Timer.scheduledTimer(withTimeInterval: frameDuration2, repeats: true) { timer in
-                if self.currentFrame2 < self.totalFrames2 {
-                    self.currentFrame2 += 1
+                if self.currentFrame < self.totalFrames2 {
+                    self.currentFrame += 1
                 } else {
-                    self.currentFrame2 = 31
+                    self.currentFrame = 31
                 }
             }
         }
@@ -826,14 +781,11 @@ struct AlarmView2: View {
     var body: some View {
         Group {
             if showBlueImage {
-               // WKInterfaceDevice.current().play(.click)
-                //WKInterfaceDevice.current().play(.notification)
                 Image("blue")
                     .resizable()
                     .scaledToFit()
                     .frame(width: 175, height: 175)
                     .offset(x: 0, y: 8.5)
-               // WKInterfaceDevice.current().play(.notification)
             } else {
                 Image("image\(currentFrame)")
                     .resizable()
@@ -841,8 +793,7 @@ struct AlarmView2: View {
                     .frame(width: 190, height: 190)
                     .offset(x: 0, y: 13)
             }
-        }
-        
+        }   
         .onAppear {
             Timer.scheduledTimer(withTimeInterval: frameDuration, repeats: true) { timer in
                 if self.currentFrame < self.totalFrames {
@@ -858,19 +809,9 @@ struct AlarmView2: View {
                 if isWashStart && isWashStop {
                     if vibrationCounter < 2 {
                         WKInterfaceDevice.current().play(.notification)
-                        //WKInterfaceDevice.current().play(.click)
                         vibrationCounter += 1
                         print ("1")
                     }
-                    /*if vibrationCounter < 1 {
-                        vibrationCounter += 1
-                        WKInterfaceDevice.current().play(.notification)
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                            WKInterfaceDevice.current().play(.notification)
-                            
-                        }
-        
-                    }*/
                     DispatchQueue.main.asyncAfter(deadline: .now() + 3.0) {
                         isWashStart = false
                     }
@@ -880,7 +821,7 @@ struct AlarmView2: View {
     }
 }
 
-// Preview part
+// Preview interfaces
 struct StatisticsView_Previews: PreviewProvider {
     static var previews: some View {
         StatisticsView(SundayData: .constant(0), MondayData: .constant(0), TuesdayData: .constant(0), WednesdayData: .constant(0), ThursdayData: .constant(0), FridayData: .constant(0), SaturdayData: .constant(0))
