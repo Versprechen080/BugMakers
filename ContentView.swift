@@ -30,17 +30,6 @@ extension UserDefaults {
         }
     }
 }
-/*
-class AppViewModel: ObservableObject {
-    @Published var customValue: Int = 0
-
-    init() {
-        if UserDefaults.standard.isAppInstalledBefore {
-            customValue = 1
-            UserDefaults.standard.isAppInstalledBefore = false
-        }
-    }
-}*/
 
 /* The entry of the app
    Has two buttons in it, setting view and statistics view
