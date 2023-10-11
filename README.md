@@ -25,4 +25,4 @@
 * Click the "Start the active scheme" button (triangle icon) at the top of navigation tab to build and run the project
 ## Tutorial
 Instructions on how to use this application
-[This is the tutorial](https://www.jianshu.com/p/65ab196bef04)
+[This is the tutorial](https://bugmakersw-wewash.squarespace.com)
