@@ -26,3 +26,5 @@
 ## Tutorial
 Instructions on how to use this application
 [This is the tutorial](https://bugmakersw-wewash.squarespace.com)
+## Back-up video
+[This is back-up video](https://youtu.be/nkZ98nIH2X4)
